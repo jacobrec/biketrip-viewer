@@ -12,6 +12,7 @@ function App() {
   const [lng, setLng] = useState(-95.0);
   const [lat, setLat] = useState(60.0);
   const [zoom, setZoom] = useState(3.0);
+  console.log(zoom);
   useEffect(() => {
     if (map.current) return; // initialize map only once
     map.current = new mapboxgl.Map({
@@ -29,9 +30,33 @@ function App() {
 
   return (
     <div>
-      <div ref={mapContainer} className="map-container" />
+      <div id="background">
+        <div ref={mapContainer} className="map-container" />
+      </div>
+      <div id="panel">
+        <h1>Jacob's bike ride</h1>
+        <JAccordian title="Color rides by">
+          <ul>
+            <li> Province </li>
+            <li> Day </li>
+            <li> Distance </li>
+          </ul>
+        </JAccordian>
+      </div>
     </div>
   );
+}
+
+function JAccordian(props) {
+  const [open, setOpen] = useState(false);
+  return (<div>
+    <h2 style={{cursor: "pointer"}} onClick={() => setOpen(!open)}>
+      {open ? "v" : ">"} { props.title }
+    </h2>
+    <div style={{margin: "10px"}}>
+      { open ? props.children : <div></div> }
+    </div>
+  </div>);
 }
 
 async function addData(map) {
@@ -53,8 +78,10 @@ async function addData(map) {
     }
 
   }
-  console.log("Added Data", data);
+  console.log("Got Data", data);
   addLineToMap(data, map);
+  console.log("Drew Data", data);
+  // return addExtraData();
 }
 
 
