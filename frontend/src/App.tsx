@@ -22,7 +22,6 @@ function App() {
   const [lng, setLng] = useState(-95.0);
   const [lat, setLat] = useState(60.0);
   const [zoom, setZoom] = useState(3.0);
-  const [colorby, setColorby] = useState("Gray");
   const [info, setInfo] = useState<DataInfo>(defaultInfo);
   useEffect(() => {
     if (typeof window === "undefined" || mapContainer.current === null) return;
@@ -41,6 +40,37 @@ function App() {
     setMap(mc);
   });
 
+  return (
+    <div>
+      <div id="background">
+        <div ref={mapContainer} className="map-container" />
+      </div>
+      <div id="panel">
+        <h1>Jacob&rsquo;s bike ride</h1>
+        <JAccordian title="Color rides by">
+          <JColorbyGroup info={info} map={map} />
+        </JAccordian>
+      </div>
+    </div>
+  )
+}
+
+// https://gist.github.com/rosszurowski/67f04465c424a9bc0dae
+function lerpColor(a: string, b: string, amount: number) {
+    var ah = +a.replace(/#/g, '0x'),
+        ar = ah >> 16, ag = ah >> 8 & 0xff, ab = ah & 0xff,
+        bh = +b.replace(/#/g, '0x'),
+        br = bh >> 16, bg = bh >> 8 & 0xff, bb = bh & 0xff,
+        rr = ar + amount * (br - ar),
+        rg = ag + amount * (bg - ag),
+        rb = ab + amount * (bb - ab);
+    return '#' + ((1 << 24) + (rr << 16) + (rg << 8) + rb | 0).toString(16).slice(1);
+}
+
+function JColorbyGroup(props: {map?: mapboxgl.Map, info: DataInfo}) {
+  const info = props.info
+  const map = props.map
+  const [colorby, setColorby] = useState("Same");
   const setLayersToColor = (color: (string|((i: number) => string))) => {
     for (let i = 1; i < info.days.length; i++) {
       let id = genMapId(i, info);
@@ -59,13 +89,13 @@ function App() {
   }
 
   const colorByDistance = (day: number) =>
-    lerpColor("#efd9ce","#25283D", info.distances[day-1] / 1000 / 201)
+    lerpColor("#FFFFFF","#000000", info.distances[day-1] / 1000 / 201)
   const colorByElevation = (day: number) =>
-    lerpColor("#efd9ce","#25283D", info.elevations[day-1] / 2500)
+    lerpColor("#FFFFFF","#000000", info.elevations[day-1] / 2500)
 
   const hillyness = (day: number) => info.elevations[day-1] / (info.distances[day-1] / 1000)
   const colorByHills = (day: number) => {
-    return lerpColor("#efd9ce","#25283D", hillyness(day)/15)
+    return lerpColor("#FFFFFF","#000000", hillyness(day)/24)
   }
   const colorByDay = (day: number) => {
     let colors = ["#2196f3", "#ff9800", "#43a047", "#e53935"]
@@ -77,42 +107,21 @@ function App() {
     case "Province": setLayersToColor(provinceColorOfDay); break;
     case "Day": setLayersToColor(colorByDay); break;
     case "Elevation": setLayersToColor(colorByElevation); break;
-    case "Hillyness": setLayersToColor(colorByHills); break;
+    case "Hilliness": setLayersToColor(colorByHills); break;
     case "Distance": setLayersToColor(colorByDistance); break;
   }
 
   return (
-    <div>
-      <div id="background">
-        <div ref={mapContainer} className="map-container" />
-      </div>
-      <div id="panel">
-        <h1>Jacob&rsquo;s bike ride</h1>
-        <JAccordian title="Color rides by">
           <JRadioGroup value={colorby} setter={setColorby}>
             <JRadio value="Same"/>
             <JRadio value="Province"/>
             <JRadio value="Day"/>
             <JRadio value="Distance"/>
-            <JRadio value="Hillyness"/>
+            <JRadio value="Hilliness"/>
             <JRadio value="Elevation"/>
           </JRadioGroup>
-        </JAccordian>
-      </div>
-    </div>
   )
-}
 
-// https://gist.github.com/rosszurowski/67f04465c424a9bc0dae
-function lerpColor(a: string, b: string, amount: number) {
-    var ah = +a.replace(/#/g, '0x'),
-        ar = ah >> 16, ag = ah >> 8 & 0xff, ab = ah & 0xff,
-        bh = +b.replace(/#/g, '0x'),
-        br = bh >> 16, bg = bh >> 8 & 0xff, bb = bh & 0xff,
-        rr = ar + amount * (br - ar),
-        rg = ag + amount * (bg - ag),
-        rb = ab + amount * (bb - ab);
-    return '#' + ((1 << 24) + (rr << 16) + (rg << 8) + rb | 0).toString(16).slice(1);
 }
 
 function JRadioGroup(props: {value:string, setter: (a:string)=>void, children?: ReactNode}) {
@@ -216,8 +225,8 @@ function addLineToMap(data: number[][], map: mapboxgl.Map, id: string) {
       'line-cap': 'round'
     },
     'paint': {
-      'line-color': '#888',
-      'line-width': 8
+      'line-color': '#fc4c02',
+      'line-width': 5
     }
   });
 }
