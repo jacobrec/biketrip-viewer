@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useState } from 'react';
-import mapboxgl from '!mapbox-gl'; // eslint-disable-line import/no-webpack-loader-syntax
+import React, { useRef, useEffect, useState, ReactNode } from 'react';
+import mapboxgl from 'mapbox-gl'; // eslint-disable-line import/no-webpack-loader-syntax
 import logo from './logo.svg';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './App.css';
@@ -8,25 +8,28 @@ mapboxgl.accessToken = '';
 
 function App() {
   const mapContainer = useRef(null);
-  const map = useRef(null);
+  const [map, setMap] = React.useState<mapboxgl.Map>();
   const [lng, setLng] = useState(-95.0);
   const [lat, setLat] = useState(60.0);
   const [zoom, setZoom] = useState(3.0);
   const [colorby, setColorby] = useState("Gray");
   console.log(zoom);
   useEffect(() => {
-    if (map.current) return; // initialize map only once
-    map.current = new mapboxgl.Map({
-      height: window.innerHeight,
+    if (typeof window === "undefined" || mapContainer.current === null) return;
+    if (map) return; // initialize map only once
+
+    const mc = new mapboxgl.Map({
+      // height: window.innerHeight,
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/streets-v11',
       center: [lng, lat],
       zoom: zoom
     });
 
-    map.current.on('load', () => {
-      addData(map);
+    mc.on('load', () => {
+      addData(mc);
     });
+    setMap(mc);
   });
 
   return (
@@ -50,8 +53,8 @@ function App() {
   );
 }
 
-function JRadioGroup(props) {
-  const [group, setGroup] = useState(Math.random().toString(36).replace(/[^a-z]+/g, ''));
+function JRadioGroup(props: {value:string, setter: (a:string)=>void, children?: ReactNode}) {
+  const [group, setGroup] = useState("colorby");
   const childrenWithProps = React.Children.map(props.children, child => {
     if (React.isValidElement(child)) {
       return React.cloneElement(child, {
@@ -66,17 +69,18 @@ function JRadioGroup(props) {
 
 }
 
-function JRadio(props) {
+function JRadio(props: {value: string, group?: string, checked?: boolean, setter?: (a:string)=>void}) {
   let id = props.group + "-" + props.value;
+  let setter = props.setter ?? ((a) => {});
   return (<div>
             <input type="radio" id={id} value={props.value} name={props.group}
-                   checked={props.checked} onChange={() => props.setter(props.value)}/>
-            <label for={id}> {props.value} </label>
+                   checked={props.checked ?? false} onChange={() => setter(props.value)}/>
+            <label htmlFor={id}> {props.value} </label>
           </div>)
 }
 
 
-function JAccordian(props) {
+function JAccordian(props: {title: string, children: ReactNode}) {
   const [open, setOpen] = useState(false);
   return (<div>
     <h2 style={{cursor: "pointer"}} onClick={() => setOpen(!open)}>
@@ -88,7 +92,7 @@ function JAccordian(props) {
   </div>);
 }
 
-async function addData(map) {
+async function addData(map: mapboxgl.Map) {
   const dataUrl = process.env.PUBLIC_URL + '/bike_data/loc';
   console.log("Fetching");
   let data = [];
@@ -114,11 +118,12 @@ async function addData(map) {
 }
 
 
-function addLineToMap(data, map) {
-  map.current.addSource('route', {
+function addLineToMap(data: number[][], map: mapboxgl.Map) {
+  map.addSource('route', {
     'type': 'geojson',
     'data': {
       'type': 'Feature',
+      'properties': {},
       'geometry': {
         'type': 'LineString',
         'coordinates': data
@@ -126,7 +131,7 @@ function addLineToMap(data, map) {
     }
   });
 
-  map.current.addLayer({
+  map.addLayer({
     'id': 'route',
     'type': 'line',
     'source': 'route',
