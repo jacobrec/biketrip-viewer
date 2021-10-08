@@ -6,30 +6,61 @@ import './App.css';
 
 mapboxgl.accessToken = '';
 
+type DataInfo = {
+  locations: string[],
+  provinces: [string, number][],
+  days: number[],
+}
+
 function App() {
+  const defaultInfo = {locations: [], provinces:[], days:[]};
   const mapContainer = useRef(null);
-  const [map, setMap] = React.useState<mapboxgl.Map>();
+  const [map, setMap] = useState<mapboxgl.Map>();
   const [lng, setLng] = useState(-95.0);
   const [lat, setLat] = useState(60.0);
   const [zoom, setZoom] = useState(3.0);
   const [colorby, setColorby] = useState("Gray");
+  const [info, setInfo] = useState<DataInfo>(defaultInfo);
   useEffect(() => {
     if (typeof window === "undefined" || mapContainer.current === null) return;
     if (map) return; // initialize map only once
 
     const mc = new mapboxgl.Map({
-      // height: window.innerHeight,
       container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v11',
+      style: 'mapbox://styles/mapbox/outdoors-v11',
       center: [lng, lat],
       zoom: zoom
     });
 
     mc.on('load', () => {
-      addData(mc);
+      addData(mc, setInfo);
     });
     setMap(mc);
   });
+
+  const setLayersToColor = (color: (string|((i: number) => string))) => {
+    for (let i = 1; i < info.days.length; i++) {
+      let id = genMapId(i, info);
+      let c = (typeof color === "string") ? color : color(i)
+      map?.setPaintProperty(id, "line-color", c)
+    }
+  }
+
+  const provinceColorOfDay = (day: number) => {
+    let colors = ["#2196f3", "#ff9800", "#43a047", "#81d4fa", "#e53935", "#1a237e", "#00acc1", "#004d40", "#e65100", "#4e342e"]
+    let provinces = ["BC", "Alberta", "Saskatchewan", "Manitoba", "Ontario", "Quebec", "New Brunswick", "Nova Scotia", "PEI", "Newfoundland"]
+    let points = info.days[day]
+    let npi = info.provinces.findIndex((x) => x[1] >= points)
+    let p = npi===-1 ? 0 : npi - 1
+    return colors[provinces.indexOf(info.provinces[p][0])]
+  }
+  switch (colorby) {
+    case "Gray": setLayersToColor("#888"); break;
+    case "Province": setLayersToColor(provinceColorOfDay); break;
+    case "Day": setLayersToColor("#00FFFF"); break;
+    case "Elevation": setLayersToColor("#00FF00"); break;
+    case "Distance": setLayersToColor("#FF0000"); break;
+  }
 
   return (
     <div>
@@ -98,10 +129,9 @@ async function getDataInfo() {
   console.log(jresponse);
   return jresponse;
 }
-async function addData(map: mapboxgl.Map) {
-  const info = await getDataInfo();
+async function addData(map: mapboxgl.Map, setInfo: (d: DataInfo)=>void) {
+  const info: DataInfo = await getDataInfo();
   const dataUrl = process.env.PUBLIC_URL + '/bike_data/loc';
-  console.log("Fetching");
   let data = [];
   let response = await fetch(dataUrl);
   let blob = await response.blob();
@@ -120,16 +150,19 @@ async function addData(map: mapboxgl.Map) {
       lf = null;
     }
     if (info.days[idx] <= c) {
+      addLineToMap(data, map, genMapId(idx, info));
       idx += 1;
-      addLineToMap(data, map, info.locations[idx-1]+ " to " +info.locations[idx]);
       data = [];
     }
   }
+  setInfo(info);
+  console.log("Fetching complete");
 }
 
-
+function genMapId(idx: number, info: DataInfo): string {
+ return info.locations[idx-1]+ " to " +info.locations[idx]
+}
 function addLineToMap(data: number[][], map: mapboxgl.Map, id: string) {
-  console.log(id);
   map.addSource(id, {
     'type': 'geojson',
     'data': {
