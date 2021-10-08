@@ -158,6 +158,7 @@ class ActivityGroup():
                 print(province, where)
             except:
                 print("Error", a.name, a)
+        self.dayIdx = dayIdx
         print(self.names)
 
     def generateFiles(self, path):
@@ -175,12 +176,10 @@ class ActivityGroup():
         data = {}
         data["locations"] = self.names
         data["provinces"] = self.provinces
+        data["days"] = self.dayIdx
         f = open(path + "info", 'w+')
         f.write(json.dumps(data, indent=4))
         f.close()
-
-
-
 
 
 

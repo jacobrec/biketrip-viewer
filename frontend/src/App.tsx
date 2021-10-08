@@ -13,7 +13,6 @@ function App() {
   const [lat, setLat] = useState(60.0);
   const [zoom, setZoom] = useState(3.0);
   const [colorby, setColorby] = useState("Gray");
-  console.log(zoom);
   useEffect(() => {
     if (typeof window === "undefined" || mapContainer.current === null) return;
     if (map) return; // initialize map only once
@@ -92,7 +91,15 @@ function JAccordian(props: {title: string, children: ReactNode}) {
   </div>);
 }
 
+async function getDataInfo() {
+  const dataUrl = process.env.PUBLIC_URL + '/bike_data/info';
+  let response = await fetch(dataUrl);
+  let jresponse = await response.json();
+  console.log(jresponse);
+  return jresponse;
+}
 async function addData(map: mapboxgl.Map) {
+  const info = await getDataInfo();
   const dataUrl = process.env.PUBLIC_URL + '/bike_data/loc';
   console.log("Fetching");
   let data = [];
@@ -102,24 +109,28 @@ async function addData(map: mapboxgl.Map) {
   let floats = new Float32Array(arr);
 
   let lf = null;
+  let idx = 1;
+  let c = 0;
   for (let f of floats) {
     if (lf === null) {
       lf = f;
     } else {
       data.push([f, lf]);
+      c += 1;
       lf = null;
     }
-
+    if (info.days[idx] <= c) {
+      idx += 1;
+      addLineToMap(data, map, info.locations[idx-1]+ " to " +info.locations[idx]);
+      data = [];
+    }
   }
-  console.log("Got Data", data);
-  addLineToMap(data, map);
-  console.log("Drew Data", data);
-  // return addExtraData();
 }
 
 
-function addLineToMap(data: number[][], map: mapboxgl.Map) {
-  map.addSource('route', {
+function addLineToMap(data: number[][], map: mapboxgl.Map, id: string) {
+  console.log(id);
+  map.addSource(id, {
     'type': 'geojson',
     'data': {
       'type': 'Feature',
@@ -132,9 +143,9 @@ function addLineToMap(data: number[][], map: mapboxgl.Map) {
   });
 
   map.addLayer({
-    'id': 'route',
+    'id': id,
     'type': 'line',
-    'source': 'route',
+    'source': id,
     'layout': {
       'line-join': 'round',
       'line-cap': 'round'
