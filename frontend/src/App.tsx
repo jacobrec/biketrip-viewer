@@ -68,7 +68,7 @@ function App() {
         <div ref={mapContainer} className="map-container" />
       </div>
       <div id="panel">
-        <h1>Jacob's bike ride</h1>
+        <h1>Jacob&rsquo;s bike ride</h1>
         <JAccordian title="Color rides by">
           <JRadioGroup value={colorby} setter={setColorby}>
             <JRadio value="Gray"/>
@@ -80,7 +80,7 @@ function App() {
         </JAccordian>
       </div>
     </div>
-  );
+  )
 }
 
 function JRadioGroup(props: {value:string, setter: (a:string)=>void, children?: ReactNode}) {
