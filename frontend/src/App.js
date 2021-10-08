@@ -12,6 +12,7 @@ function App() {
   const [lng, setLng] = useState(-95.0);
   const [lat, setLat] = useState(60.0);
   const [zoom, setZoom] = useState(3.0);
+  const [colorby, setColorby] = useState("Gray");
   console.log(zoom);
   useEffect(() => {
     if (map.current) return; // initialize map only once
@@ -36,16 +37,44 @@ function App() {
       <div id="panel">
         <h1>Jacob's bike ride</h1>
         <JAccordian title="Color rides by">
-          <ul>
-            <li> Province </li>
-            <li> Day </li>
-            <li> Distance </li>
-          </ul>
+          <JRadioGroup value={colorby} setter={setColorby}>
+            <JRadio value="Gray"/>
+            <JRadio value="Province"/>
+            <JRadio value="Day"/>
+            <JRadio value="Distance"/>
+            <JRadio value="Elevation"/>
+          </JRadioGroup>
         </JAccordian>
       </div>
     </div>
   );
 }
+
+function JRadioGroup(props) {
+  const [group, setGroup] = useState(Math.random().toString(36).replace(/[^a-z]+/g, ''));
+  const childrenWithProps = React.Children.map(props.children, child => {
+    if (React.isValidElement(child)) {
+      return React.cloneElement(child, {
+        group,
+        checked: child.props.value === props.value,
+        setter: props.setter
+      });
+    }
+    return child;
+  });
+  return <div style={{flexFlow: "column", display: "flex"}}> {childrenWithProps} </div>
+
+}
+
+function JRadio(props) {
+  let id = props.group + "-" + props.value;
+  return (<div>
+            <input type="radio" id={id} value={props.value} name={props.group}
+                   checked={props.checked} onChange={() => props.setter(props.value)}/>
+            <label for={id}> {props.value} </label>
+          </div>)
+}
+
 
 function JAccordian(props) {
   const [open, setOpen] = useState(false);
