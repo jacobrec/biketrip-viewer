@@ -141,10 +141,16 @@ class ActivityGroup():
         dayIdx = [0]
         self.names = ["Vancouver"]
         self.provinces = [("BC", 0)]
+        self.distances = []
+        self.elevations = []
+        self.times = []
         for a in activities:
             try:
                 idx = dayIdx[-1]
                 self.track += a.track
+                self.distances.append(a.totalDistance)
+                self.elevations.append(a.totalElevation)
+                self.times.append(a.totalTime)
                 dayIdx.append(len(a.track) + idx)
                 lastProvince = self.provinces[-1][0]
                 province = a.name.split(":")[1][1:].split("-")[0].strip()
@@ -177,6 +183,9 @@ class ActivityGroup():
         data["locations"] = self.names
         data["provinces"] = self.provinces
         data["days"] = self.dayIdx
+        data["distances"] = self.distances
+        data["elevations"] = self.elevations
+        data["times"] = self.times
         f = open(path + "info", 'w+')
         f.write(json.dumps(data, indent=4))
         f.close()
