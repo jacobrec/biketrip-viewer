@@ -41,6 +41,7 @@ class Activity:
         for i in range(n):
             self.track[i].speed = 0
             self.track[i].grade = 0
+        self.topSpeed = 0
         for i in range(n, len(self.track)):
             p1 = self.track[i-n]
             p2 = self.track[i]
@@ -56,9 +57,9 @@ class Activity:
             # Cleanup speeds
             if self.track[i].speed > 21:
                 self.track[i].speed = self.track[i-1].speed
+            self.topSpeed = max(self.track[i].speed, self.topSpeed)
 
-            self.topSpeed = max([x.speed for x in self.track])
-            self.averageSpeed = self.totalDistance / self.totalTime
+        self.averageSpeed = self.totalDistance / self.totalTime
 
 
 
