@@ -1,10 +1,10 @@
-import React, { useRef, useEffect, useState, ReactNode } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl'; // eslint-disable-line import/no-webpack-loader-syntax
-import logo from './logo.svg';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './App.css';
+import {JRadio, JRadioGroup, JAccordian, JHRule} from './Components'
 
-mapboxgl.accessToken = '';
+mapboxgl.accessToken = 'pk.eyJ1Ijoic3VqYW5jaGFrcmFib3J0eSIsImEiOiJja2Q5MzBuc3owenplMnBzY2I0eDYwdDhvIn0.imItePLDlYNF2BGVde_mkw';
 
 type DataInfo = {
   locations: string[],
@@ -45,26 +45,62 @@ function App() {
       <div id="background">
         <div ref={mapContainer} className="map-container" />
       </div>
-      <div id="panel">
+      <div className="card" id="panel">
         <h1>Jacob&rsquo;s bike ride</h1>
-        <JAccordian title="Color rides by">
-          <JColorbyGroup info={info} map={map} />
-        </JAccordian>
+        <div style={{marginLeft: "10px"}}>
+          <JAccordian title="Line Color">
+            <JColorbyGroup info={info} map={map} />
+          </JAccordian>
+          <JHRule />
+          <JAccordian title="Graph">
+            <JGraphGroup info={info} />
+          </JAccordian>
+          <JHRule />
+          <JAccordian title="Highlights">
+            <JHighlightGroup info={info} map={map} />
+          </JAccordian>
+        </div>
       </div>
     </div>
   )
 }
 
-// https://gist.github.com/rosszurowski/67f04465c424a9bc0dae
-function lerpColor(a: string, b: string, amount: number) {
-    var ah = +a.replace(/#/g, '0x'),
-        ar = ah >> 16, ag = ah >> 8 & 0xff, ab = ah & 0xff,
-        bh = +b.replace(/#/g, '0x'),
-        br = bh >> 16, bg = bh >> 8 & 0xff, bb = bh & 0xff,
-        rr = ar + amount * (br - ar),
-        rg = ag + amount * (bg - ag),
-        rb = ab + amount * (bb - ab);
-    return '#' + ((1 << 24) + (rr << 16) + (rg << 8) + rb | 0).toString(16).slice(1);
+function JHighlightGroup(props: {info: DataInfo, map?: mapboxgl.Map}) {
+  const [highlight, setHighlight] = useState("All");
+  const filterDays = (days: number[]) => {
+    for (let i = 1; i < props.info.days.length; i++) {
+      console.log(days.includes(i) ? 'visible' : 'none')
+      const id = genMapId(i, props.info)
+      // props.map?.setLayoutProperty(id, 'visibility', days.includes(i) ? 'visible' : 'none')
+      props.map?.setPaintProperty(id, 'line-opacity', days.includes(i) ? 1 : 0)
+    }
+  }
+  switch (highlight) {
+      case 'All': filterDays([...Array(props.info.days.length+1).keys()]); break;
+      default: filterDays([]); break;
+
+  }
+  return (
+          <JRadioGroup value={highlight} setter={setHighlight}>
+            <JRadio value="All"/>
+            <JRadio value="Top Average Speed"/>
+            <JRadio value="Top Max Speed"/>
+            <JRadio value="Top Distance"/>
+            <JRadio value="Top Time"/>
+            <JRadio value="Top Elevation"/>
+            <JRadio value="Top Hilliness"/>
+          </JRadioGroup>
+  )
+}
+
+
+function JGraphGroup(props: {info: DataInfo}) {
+  const [graphType, setGraphType] = useState("None");
+  return (
+          <JRadioGroup value={graphType} setter={setGraphType}>
+            <JRadio value="None"/>
+          </JRadioGroup>
+  )
 }
 
 function JColorbyGroup(props: {map?: mapboxgl.Map, info: DataInfo}) {
@@ -121,47 +157,20 @@ function JColorbyGroup(props: {map?: mapboxgl.Map, info: DataInfo}) {
             <JRadio value="Elevation"/>
           </JRadioGroup>
   )
-
 }
 
-function JRadioGroup(props: {value:string, setter: (a:string)=>void, children?: ReactNode}) {
-  const [group, setGroup] = useState("colorby");
-  const childrenWithProps = React.Children.map(props.children, child => {
-    if (React.isValidElement(child)) {
-      return React.cloneElement(child, {
-        group,
-        checked: child.props.value === props.value,
-        setter: props.setter
-      });
-    }
-    return child;
-  });
-  return <div style={{flexFlow: "column", display: "flex"}}> {childrenWithProps} </div>
-
+// https://gist.github.com/rosszurowski/67f04465c424a9bc0dae
+function lerpColor(a: string, b: string, amount: number) {
+    var ah = +a.replace(/#/g, '0x'),
+        ar = ah >> 16, ag = ah >> 8 & 0xff, ab = ah & 0xff,
+        bh = +b.replace(/#/g, '0x'),
+        br = bh >> 16, bg = bh >> 8 & 0xff, bb = bh & 0xff,
+        rr = ar + amount * (br - ar),
+        rg = ag + amount * (bg - ag),
+        rb = ab + amount * (bb - ab);
+    return '#' + ((1 << 24) + (rr << 16) + (rg << 8) + rb | 0).toString(16).slice(1);
 }
 
-function JRadio(props: {value: string, group?: string, checked?: boolean, setter?: (a:string)=>void}) {
-  let id = props.group + "-" + props.value;
-  let setter = props.setter ?? ((a) => {});
-  return (<div>
-            <input type="radio" id={id} value={props.value} name={props.group}
-                   checked={props.checked ?? false} onChange={() => setter(props.value)}/>
-            <label htmlFor={id}> {props.value} </label>
-          </div>)
-}
-
-
-function JAccordian(props: {title: string, children: ReactNode}) {
-  const [open, setOpen] = useState(false);
-  return (<div>
-    <h2 style={{cursor: "pointer"}} onClick={() => setOpen(!open)}>
-      {open ? "v" : ">"} { props.title }
-    </h2>
-    <div style={{margin: "10px"}}>
-      { open ? props.children : <div></div> }
-    </div>
-  </div>);
-}
 
 async function getDataInfo() {
   const dataUrl = process.env.PUBLIC_URL + '/bike_data/info';
