@@ -42,7 +42,7 @@ export function JAccordian(props: {title: string, children: ReactNode}) {
       {open ? <ExpandLess/> : <ExpandMore/> } { props.title }
     </h2>
     <div style={{margin: "10px"}}>
-      { open ? props.children : <div></div> }
+      { open ? <div>{props.children}</div> : <div style={{display: "none"}}>{props.children}</div> }
     </div>
   </div>);
 }
