@@ -16,6 +16,7 @@ class Activity:
         self.totalTime = 0
         self.totalElevation = 0
         self.averageSpeed = 0
+        self.topSpeed = 0
 
     def __str__(self):
         points = [str(x) for x in self.track]
@@ -28,7 +29,7 @@ class Activity:
                 self.totalDistance / 1000,
                 self.totalElevation,
                 self.totalTime / 60,
-                max([x.speed for x in self.track]) * 3.6)
+                self.topSpeed * 3.6)
 
     def __repr__(self):
         return str(self)
@@ -55,6 +56,9 @@ class Activity:
             # Cleanup speeds
             if self.track[i].speed > 21:
                 self.track[i].speed = self.track[i-1].speed
+
+            self.topSpeed = max([x.speed for x in self.track])
+            self.averageSpeed = self.totalDistance / self.totalTime
 
 
 
@@ -131,6 +135,7 @@ def loadFile(filename):
         act = parseFile(filename)
     act.addSpeeds()
     print("Loaded file '{}'".format(filename))
+    print(act)
     return act
 
 
@@ -144,12 +149,16 @@ class ActivityGroup():
         self.distances = []
         self.elevations = []
         self.times = []
+        self.topspeeds = []
+        self.averagespeeds = []
         for a in activities:
             try:
                 idx = dayIdx[-1]
                 self.track += a.track
                 self.distances.append(a.totalDistance)
                 self.elevations.append(a.totalElevation)
+                self.topspeeds.append(a.topSpeed)
+                self.averagespeeds.append(a.averageSpeed)
                 self.times.append(a.totalTime)
                 dayIdx.append(len(a.track) + idx)
                 lastProvince = self.provinces[-1][0]
@@ -186,6 +195,8 @@ class ActivityGroup():
         data["distances"] = self.distances
         data["elevations"] = self.elevations
         data["times"] = self.times
+        data["topspeeds"] = self.topspeeds
+        data["averagespeeds"] = self.averagespeeds
         f = open(path + "info", 'w+')
         f.write(json.dumps(data, indent=4))
         f.close()
@@ -199,7 +210,6 @@ def createSuperFileFromGPX(globpath, export):
     with Pool(4) as p:
         activities = p.map(loadFile, files)
     activites = [x for x in activities]
-    [print(x) for x in activites]
     acts = ActivityGroup(activities)
     acts.generateFiles(export)
 

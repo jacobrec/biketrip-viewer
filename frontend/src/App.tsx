@@ -13,10 +13,12 @@ type DataInfo = {
   distances: number[],
   elevations: number[],
   times: number[],
+  topspeeds: number[],
+  averagespeeds: number[],
 }
 
 function App() {
-  const defaultInfo = {locations: [], provinces:[], days:[], distances:[], elevations:[], times:[]};
+  const defaultInfo = {locations: [], provinces:[], days:[], distances:[], elevations:[], times:[], topspeeds:[], averagespeeds:[]};
   const mapContainer = useRef(null);
   const [map, setMap] = useState<mapboxgl.Map>();
   const [lng, setLng] = useState(-95.0);
@@ -97,6 +99,8 @@ function JHighlightGroup(props: {info: DataInfo, map?: mapboxgl.Map}) {
     case 'Top Elevation': filterDays(topDays('elevations')); break;
     case 'Top Time': filterDays(topDays('times')); break;
     case 'Top Hilliness': filterDays(topDaysL(hillinessList)); break;
+    case 'Top Average Speed': filterDays(topDays('averagespeeds')); break;
+    case 'Top Max Speed': filterDays(topDays('topspeeds')); break;
     default: filterDays([]); break;
   }
   return (
@@ -147,6 +151,10 @@ function JColorbyGroup(props: {map?: mapboxgl.Map, info: DataInfo}) {
     lerpColor("#FFFFFF","#000000", info.distances[day-1] / 1000 / 201)
   const colorByElevation = (day: number) =>
     lerpColor("#FFFFFF","#000000", info.elevations[day-1] / 2500)
+  const colorBySpeedTop = (day: number) =>
+    lerpColor("#FFFFFF","#000000", info.topspeeds[day-1] / 22)
+  const colorBySpeedAve = (day: number) =>
+    lerpColor("#FFFFFF","#000000", info.averagespeeds[day-1] / 6.5)
 
   const hillyness = (day: number) => info.elevations[day-1] / (info.distances[day-1] / 1000)
   const colorByHills = (day: number) => {
@@ -164,6 +172,8 @@ function JColorbyGroup(props: {map?: mapboxgl.Map, info: DataInfo}) {
     case "Elevation": setLayersToColor(colorByElevation); break;
     case "Hilliness": setLayersToColor(colorByHills); break;
     case "Distance": setLayersToColor(colorByDistance); break;
+    case "Top Speed": setLayersToColor(colorBySpeedTop); break;
+    case "Average Speed": setLayersToColor(colorBySpeedAve); break;
   }
 
   return (
@@ -174,6 +184,8 @@ function JColorbyGroup(props: {map?: mapboxgl.Map, info: DataInfo}) {
             <JRadio value="Distance"/>
             <JRadio value="Hilliness"/>
             <JRadio value="Elevation"/>
+            <JRadio value="Top Speed"/>
+            <JRadio value="Average Speed"/>
           </JRadioGroup>
   )
 }
