@@ -69,16 +69,35 @@ function JHighlightGroup(props: {info: DataInfo, map?: mapboxgl.Map}) {
   const [highlight, setHighlight] = useState("All");
   const filterDays = (days: number[]) => {
     for (let i = 1; i < props.info.days.length; i++) {
-      console.log(days.includes(i) ? 'visible' : 'none')
-      const id = genMapId(i, props.info)
-      // props.map?.setLayoutProperty(id, 'visibility', days.includes(i) ? 'visible' : 'none')
-      props.map?.setPaintProperty(id, 'line-opacity', days.includes(i) ? 1 : 0)
+      props.map?.setPaintProperty(genMapId(i, props.info), 'line-opacity', days.includes(i) ? 1 : 0)
     }
   }
+  const topDaysL = (srcList: number[]) => {
+    let largest = [[0,0], [0,0], [0,0], [0,0], [0,0]]
+    for (let i = 0; i < props.info.days.length; i++) {
+      const l = srcList[i]
+      if (largest[0][0] < l) {
+        largest[0] = [l, i]
+      }
+      largest.sort((a, b) => a[0] - b[0])
+    }
+    console.log(largest.map((a) => a[1]+1))
+    return largest.map((a) => a[1]+1)
+  }
+  const topDays = (p: string) => {
+    let data: any = props.info
+    let srcList = data[p]
+    return topDaysL(srcList)
+  }
+  const hillyness = (day: number) => props.info.elevations[day] / (props.info.distances[day] / 1000)
+  const hillinessList = props.info.distances.map((e, i) => hillyness(i))
   switch (highlight) {
-      case 'All': filterDays([...Array(props.info.days.length+1).keys()]); break;
-      default: filterDays([]); break;
-
+    case 'All': filterDays([...Array(props.info.days.length+1).keys()]); break;
+    case 'Top Distance': filterDays(topDays('distances')); break;
+    case 'Top Elevation': filterDays(topDays('elevations')); break;
+    case 'Top Time': filterDays(topDays('times')); break;
+    case 'Top Hilliness': filterDays(topDaysL(hillinessList)); break;
+    default: filterDays([]); break;
   }
   return (
           <JRadioGroup value={highlight} setter={setHighlight}>
