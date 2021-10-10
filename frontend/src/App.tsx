@@ -147,18 +147,30 @@ function JColorbyGroup(props: {map?: mapboxgl.Map, info: DataInfo}) {
     return colors[provinces.indexOf(info.provinces[p][0])]
   }
 
-  const colorByDistance = (day: number) =>
-    lerpColor("#FFFFFF","#000000", info.distances[day-1] / 1000 / 201)
-  const colorByElevation = (day: number) =>
-    lerpColor("#FFFFFF","#000000", info.elevations[day-1] / 2500)
-  const colorBySpeedTop = (day: number) =>
-    lerpColor("#FFFFFF","#000000", info.topspeeds[day-1] / 22)
-  const colorBySpeedAve = (day: number) =>
-    lerpColor("#FFFFFF","#000000", info.averagespeeds[day-1] / 6.5)
+  const hillys = info.elevations.map((e, i) => e / info.distances[i])
+  const maxDistance = Math.max(...info.distances)
+  const minDistance = Math.min(...info.distances)
+  const maxElevation = Math.max(...info.elevations)
+  const minElevation = Math.min(...info.elevations)
+  const maxTop = Math.max(...info.topspeeds)
+  const minTop = Math.min(...info.topspeeds)
+  const maxAve = Math.max(...info.averagespeeds)
+  const minAve = Math.min(...info.averagespeeds)
+  const maxHill = Math.max(...hillys)
+  const minHill = Math.min(...hillys)
 
-  const hillyness = (day: number) => info.elevations[day-1] / (info.distances[day-1] / 1000)
+  const colorByDistance = (day: number) =>
+    lerpColor("#FFFFFF","#000000", (info.distances[day-1] - minDistance) / (maxDistance - minDistance))
+  const colorByElevation = (day: number) =>
+    lerpColor("#FFFFFF","#000000", (info.elevations[day-1] - minElevation) / (maxElevation - minElevation))
+  const colorBySpeedTop = (day: number) =>
+    lerpColor("#FFFFFF","#000000", (info.topspeeds[day-1] - minTop) / (maxTop - minTop))
+  const colorBySpeedAve = (day: number) =>
+    lerpColor("#FFFFFF","#000000", (info.averagespeeds[day-1] - minAve) / (maxAve - minAve))
+
+  const hillyness = (day: number) => ((hillys[day-1] - minHill) / (maxHill - minHill))
   const colorByHills = (day: number) => {
-    return lerpColor("#FFFFFF","#000000", hillyness(day)/24)
+    return lerpColor("#FFFFFF","#000000", hillyness(day))
   }
   const colorByDay = (day: number) => {
     let colors = ["#2196f3", "#ff9800", "#43a047", "#e53935"]
