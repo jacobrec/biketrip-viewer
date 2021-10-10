@@ -154,7 +154,7 @@ class ActivityGroup():
                 dayIdx.append(len(a.track) + idx)
                 lastProvince = self.provinces[-1][0]
                 province = a.name.split(":")[1][1:].split("-")[0].strip()
-                where = a.name.split("-")[1].strip().split(" to ")
+                where = "-".join(a.name.split("-")[1:]).strip().split(" to ")
                 if self.names[-1] != where[0]:
                     where[0] = self.names[-1] + "/" + where[0]
                     self.names[-1] = where[0]
