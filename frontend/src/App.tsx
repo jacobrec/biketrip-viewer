@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
+import styled from '@emotion/styled'
 import mapboxgl from 'mapbox-gl'; // eslint-disable-line import/no-webpack-loader-syntax
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './App.css';
@@ -40,13 +41,15 @@ function App() {
       addData(mc, setInfo);
     });
     setMap(mc);
-  });
+  }, [map, lng, lat, zoom]);
 
   return (
     <div>
       <div id="background">
         <div ref={mapContainer} className="map-container" />
       </div>
+
+      <JHoverBox info={info} map={map} />
       <div className="card" id="panel">
         <h1>Jacob&rsquo;s bike ride</h1>
         <div style={{marginLeft: "10px"}}>
@@ -66,43 +69,76 @@ function App() {
     </div>
   )
 }
+function JHoverBox (props: {info: DataInfo, map?: mapboxgl.Map}) {
+  const [hovered, setHovered] = useState(-1);
+  useEffect(() => {
+    for (let i = 0; i < props.info.days.length; i++) {
+      let id = genMapId(i, props.info)
+      props.map?.on('mouseenter', id, () => {
+        if (props.map?.getPaintProperty(id, 'line-opacity') === 1) {
+          setHovered(i-1)
+        }
+      })
+    }
+    console.log("Hover listeners setup")
+  }, [props.map])
+  if (hovered === -1) {
+    return <div></div>
+  }
+  const P = styled.p`
+    margin-bottom: 0px;
+    margin-top: 2px;
+  `
+  return (
+    <div className="card" id="hoverbox" style={{position: "absolute", left: "0px", bottom: "0px"}}>
+      <h3> Day {hovered+1}: {genMapId(hovered+1, props.info)} </h3>
+      <P> Distance: {(props.info.distances[hovered] / 1000).toFixed(3)}km </P>
+      <P> Time: {(props.info.times[hovered] / 3600).toFixed(2)}h </P>
+      <P> Elevations: {(props.info.elevations[hovered]).toFixed(0)}m </P>
+      <P> Max Speed: {(props.info.topspeeds[hovered] * 3.6).toFixed(1)}km/h </P>
+      <P> Average Speed: {(props.info.averagespeeds[hovered] * 3.6).toFixed(1)}km/h </P>
+    </div>
+  )
+
+}
 
 function JHighlightGroup(props: {info: DataInfo, map?: mapboxgl.Map}) {
   const [highlight, setHighlight] = useState("All");
-  const filterDays = (days: number[]) => {
-    for (let i = 1; i < props.info.days.length; i++) {
-      props.map?.setPaintProperty(genMapId(i, props.info), 'line-opacity', days.includes(i) ? 1 : 0)
-    }
-  }
-  const topDaysL = (srcList: number[]) => {
-    let largest = [[0,0], [0,0], [0,0], [0,0], [0,0]]
-    for (let i = 0; i < props.info.days.length; i++) {
-      const l = srcList[i]
-      if (largest[0][0] < l) {
-        largest[0] = [l, i]
+  useEffect(() => {
+    const filterDays = (days: number[]) => {
+      for (let i = 1; i < props.info.days.length; i++) {
+        props.map?.setPaintProperty(genMapId(i, props.info), 'line-opacity', days.includes(i) ? 1 : 0)
       }
-      largest.sort((a, b) => a[0] - b[0])
     }
-    console.log(largest.map((a) => a[1]+1))
-    return largest.map((a) => a[1]+1)
-  }
-  const topDays = (p: string) => {
-    let data: any = props.info
-    let srcList = data[p]
-    return topDaysL(srcList)
-  }
-  const hillyness = (day: number) => props.info.elevations[day] / (props.info.distances[day] / 1000)
-  const hillinessList = props.info.distances.map((e, i) => hillyness(i))
-  switch (highlight) {
-    case 'All': filterDays([...Array(props.info.days.length+1).keys()]); break;
-    case 'Top Distance': filterDays(topDays('distances')); break;
-    case 'Top Elevation': filterDays(topDays('elevations')); break;
-    case 'Top Time': filterDays(topDays('times')); break;
-    case 'Top Hilliness': filterDays(topDaysL(hillinessList)); break;
-    case 'Top Average Speed': filterDays(topDays('averagespeeds')); break;
-    case 'Top Max Speed': filterDays(topDays('topspeeds')); break;
-    default: filterDays([]); break;
-  }
+    const topDaysL = (srcList: number[]) => {
+      let largest = [[0,0], [0,0], [0,0], [0,0], [0,0]]
+      for (let i = 0; i < props.info.days.length; i++) {
+        const l = srcList[i]
+        if (largest[0][0] < l) {
+          largest[0] = [l, i]
+        }
+        largest.sort((a, b) => a[0] - b[0])
+      }
+      return largest.map((a) => a[1]+1)
+    }
+    const topDays = (p: string) => {
+      let data: any = props.info
+      let srcList = data[p]
+      return topDaysL(srcList)
+    }
+    const hillyness = (day: number) => props.info.elevations[day] / (props.info.distances[day] / 1000)
+    const hillinessList = props.info.distances.map((e, i) => hillyness(i))
+    switch (highlight) {
+      case 'All': filterDays([...Array(props.info.days.length+1).keys()]); break;
+      case 'Top Distance': filterDays(topDays('distances')); break;
+      case 'Top Elevation': filterDays(topDays('elevations')); break;
+      case 'Top Time': filterDays(topDays('times')); break;
+      case 'Top Hilliness': filterDays(topDaysL(hillinessList)); break;
+      case 'Top Average Speed': filterDays(topDays('averagespeeds')); break;
+      case 'Top Max Speed': filterDays(topDays('topspeeds')); break;
+      default: filterDays([]); break;
+    }
+  }, [highlight])
   return (
           <JRadioGroup value={highlight} setter={setHighlight}>
             <JRadio value="All"/>
@@ -127,66 +163,68 @@ function JGraphGroup(props: {info: DataInfo}) {
 }
 
 function JColorbyGroup(props: {map?: mapboxgl.Map, info: DataInfo}) {
-  const info = props.info
-  const map = props.map
   const [colorby, setColorby] = useState("Same");
-  const setLayersToColor = (color: (string|((i: number) => string))) => {
-    for (let i = 1; i < info.days.length; i++) {
-      let id = genMapId(i, info);
-      let c = (typeof color === "string") ? color : color(i)
-      map?.setPaintProperty(id, "line-color", c)
+
+  useEffect(() => {
+    const info = props.info
+    const map = props.map
+    const setLayersToColor = (color: (string|((i: number) => string))) => {
+      for (let i = 1; i < info.days.length; i++) {
+        let id = genMapId(i, info);
+        let c = (typeof color === "string") ? color : color(i)
+        map?.setPaintProperty(id, "line-color", c)
+      }
     }
-  }
 
-  const provinceColorOfDay = (day: number) => {
-    let colors = ["#2196f3", "#ff9800", "#43a047", "#81d4fa", "#e53935", "#1a237e", "#00acc1", "#004d40", "#e65100", "#4e342e"]
-    let provinces = ["BC", "Alberta", "Saskatchewan", "Manitoba", "Ontario", "Quebec", "New Brunswick", "Nova Scotia", "PEI", "Newfoundland"]
-    let points = info.days[day]
-    let npi = info.provinces.findIndex((x) => x[1] >= points)
-    let p = npi===-1 ? 0 : npi - 1
-    return colors[provinces.indexOf(info.provinces[p][0])]
-  }
+    const provinceColorOfDay = (day: number) => {
+      let colors = ["#2196f3", "#ff9800", "#43a047", "#81d4fa", "#e53935", "#1a237e", "#00acc1", "#004d40", "#e65100", "#4e342e"]
+      let provinces = ["BC", "Alberta", "Saskatchewan", "Manitoba", "Ontario", "Quebec", "New Brunswick", "Nova Scotia", "PEI", "Newfoundland"]
+      let points = info.days[day]
+      let npi = info.provinces.findIndex((x) => x[1] >= points)
+      let p = npi===-1 ? 0 : npi - 1
+      return colors[provinces.indexOf(info.provinces[p][0])]
+    }
 
-  const hillys = info.elevations.map((e, i) => e / info.distances[i])
-  const maxDistance = Math.max(...info.distances)
-  const minDistance = Math.min(...info.distances)
-  const maxElevation = Math.max(...info.elevations)
-  const minElevation = Math.min(...info.elevations)
-  const maxTop = Math.max(...info.topspeeds)
-  const minTop = Math.min(...info.topspeeds)
-  const maxAve = Math.max(...info.averagespeeds)
-  const minAve = Math.min(...info.averagespeeds)
-  const maxHill = Math.max(...hillys)
-  const minHill = Math.min(...hillys)
+    const hillys = info.elevations.map((e, i) => e / info.distances[i])
+    const maxDistance = Math.max(...info.distances)
+    const minDistance = Math.min(...info.distances)
+    const maxElevation = Math.max(...info.elevations)
+    const minElevation = Math.min(...info.elevations)
+    const maxTop = Math.max(...info.topspeeds)
+    const minTop = Math.min(...info.topspeeds)
+    const maxAve = Math.max(...info.averagespeeds)
+    const minAve = Math.min(...info.averagespeeds)
+    const maxHill = Math.max(...hillys)
+    const minHill = Math.min(...hillys)
 
-  const colorByDistance = (day: number) =>
-    lerpColor("#FFFFFF","#000000", (info.distances[day-1] - minDistance) / (maxDistance - minDistance))
-  const colorByElevation = (day: number) =>
-    lerpColor("#FFFFFF","#000000", (info.elevations[day-1] - minElevation) / (maxElevation - minElevation))
-  const colorBySpeedTop = (day: number) =>
-    lerpColor("#FFFFFF","#000000", (info.topspeeds[day-1] - minTop) / (maxTop - minTop))
-  const colorBySpeedAve = (day: number) =>
-    lerpColor("#FFFFFF","#000000", (info.averagespeeds[day-1] - minAve) / (maxAve - minAve))
+    const colorByDistance = (day: number) =>
+      lerpColor("#FFFFFF","#000000", (info.distances[day-1] - minDistance) / (maxDistance - minDistance))
+    const colorByElevation = (day: number) =>
+      lerpColor("#FFFFFF","#000000", (info.elevations[day-1] - minElevation) / (maxElevation - minElevation))
+    const colorBySpeedTop = (day: number) =>
+      lerpColor("#FFFFFF","#000000", (info.topspeeds[day-1] - minTop) / (maxTop - minTop))
+    const colorBySpeedAve = (day: number) =>
+      lerpColor("#FFFFFF","#000000", (info.averagespeeds[day-1] - minAve) / (maxAve - minAve))
 
-  const hillyness = (day: number) => ((hillys[day-1] - minHill) / (maxHill - minHill))
-  const colorByHills = (day: number) => {
-    return lerpColor("#FFFFFF","#000000", hillyness(day))
-  }
-  const colorByDay = (day: number) => {
-    let colors = ["#2196f3", "#ff9800", "#43a047", "#e53935"]
-    return colors[day % colors.length]
-  }
-
-  switch (colorby) {
-    case "Same": setLayersToColor("#fc4c02"); break;
-    case "Province": setLayersToColor(provinceColorOfDay); break;
-    case "Day": setLayersToColor(colorByDay); break;
-    case "Elevation": setLayersToColor(colorByElevation); break;
-    case "Hilliness": setLayersToColor(colorByHills); break;
-    case "Distance": setLayersToColor(colorByDistance); break;
-    case "Top Speed": setLayersToColor(colorBySpeedTop); break;
-    case "Average Speed": setLayersToColor(colorBySpeedAve); break;
-  }
+    const hillyness = (day: number) => ((hillys[day-1] - minHill) / (maxHill - minHill))
+    const colorByHills = (day: number) => {
+      return lerpColor("#FFFFFF","#000000", hillyness(day))
+    }
+    const colorByDay = (day: number) => {
+      let colors = ["#2196f3", "#ff9800", "#43a047", "#e53935"]
+      return colors[day % colors.length]
+    }
+    switch (colorby) {
+      case "Same": setLayersToColor("#fc4c02"); break;
+      case "Province": setLayersToColor(provinceColorOfDay); break;
+      case "Day": setLayersToColor(colorByDay); break;
+      case "Elevation": setLayersToColor(colorByElevation); break;
+      case "Hilliness": setLayersToColor(colorByHills); break;
+      case "Distance": setLayersToColor(colorByDistance); break;
+      case "Top Speed": setLayersToColor(colorBySpeedTop); break;
+      case "Average Speed": setLayersToColor(colorBySpeedAve); break;
+    }
+  }, [colorby])
 
   return (
           <JRadioGroup value={colorby} setter={setColorby}>
