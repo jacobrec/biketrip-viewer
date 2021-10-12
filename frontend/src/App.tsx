@@ -4,6 +4,7 @@ import mapboxgl from 'mapbox-gl'; // eslint-disable-line import/no-webpack-loade
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './App.css';
 import {JRadio, JRadioGroup, JAccordian, JHRule} from './Components'
+import * as d3 from "d3";
 
 mapboxgl.accessToken = 'pk.eyJ1Ijoic3VqYW5jaGFrcmFib3J0eSIsImEiOiJja2Q5MzBuc3owenplMnBzY2I0eDYwdDhvIn0.imItePLDlYNF2BGVde_mkw';
 
@@ -18,6 +19,14 @@ type DataInfo = {
   averagespeeds: number[],
 }
 
+type DataPoint = {
+  elevation: number,
+  latitude: number,
+  longtitude: number,
+  speed: number,
+  time: number,
+}
+
 function App() {
   const defaultInfo = {locations: [], provinces:[], days:[], distances:[], elevations:[], times:[], topspeeds:[], averagespeeds:[]};
   const mapContainer = useRef(null);
@@ -26,6 +35,7 @@ function App() {
   const [lat, setLat] = useState(60.0);
   const [zoom, setZoom] = useState(3.0);
   const [info, setInfo] = useState<DataInfo>(defaultInfo);
+  const [graphData, setGraphData] = useState<DataPoint[]>([]);
   useEffect(() => {
     if (typeof window === "undefined" || mapContainer.current === null) return;
     if (map) return; // initialize map only once
@@ -38,11 +48,12 @@ function App() {
     });
 
     mc.on('load', () => {
-      addData(mc, setInfo);
+      addData(mc, setInfo, setGraphData);
     });
     setMap(mc);
   }, [map, lng, lat, zoom]);
 
+  const [graphType, setGraphType] = useState("None");
   return (
     <div>
       <div id="background">
@@ -50,6 +61,7 @@ function App() {
       </div>
 
       <JHoverBox info={info} map={map} />
+      <JGraphBox value={graphType} graphData={graphData} />
       <div className="card" id="panel">
         <h1>Jacob&rsquo;s bike ride</h1>
         <div style={{marginLeft: "10px"}}>
@@ -58,7 +70,7 @@ function App() {
           </JAccordian>
           <JHRule />
           <JAccordian title="Graph">
-            <JGraphGroup info={info} />
+            <JGraphGroup value={graphType} setter={setGraphType} />
           </JAccordian>
           <JHRule />
           <JAccordian title="Highlights">
@@ -69,6 +81,89 @@ function App() {
     </div>
   )
 }
+
+function JGraphBox(props: {graphData: DataPoint[], value: string}) {
+  useEffect(() => {
+    // set the dimensions and margins of the graph
+    const margin = {top: 10, right: 30, bottom: 30, left: 50},
+    width = 660 - margin.left - margin.right,
+    height = 300 - margin.top - margin.bottom;
+
+    // append the svg object to the body of the page
+    d3.select("#chartsvg").remove();
+    const svg = d3.select("#chartdiv")
+      .append("svg")
+      .attr("id","chartsvg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform",`translate(${margin.left},${margin.top})`);
+
+
+
+    const addData = async (value: string) => {
+      const dGet = (d: DataPoint) => {
+        switch(props.value) {
+          case "Speed": return d.speed
+          case "Elevation": return d.elevation
+          default: return 0
+        }
+      }
+      // Add X axis
+      const x = d3.scaleTime()
+        .domain(d3.extent(props.graphData, d => d.time*1000) as [number, number])
+        .range([ 0, width ]);
+
+      svg.append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(x));
+
+      // Add Y axis
+      const y = d3.scaleLinear()
+        .domain([0, d3.max(props.graphData, d => dGet(d)) as number])
+        .range([ height, 0 ]);
+
+      svg.append("g")
+        .call(d3.axisLeft(y));
+      // Add the area
+      svg.append("path")
+        .datum(props.graphData)
+        .attr("fill", "#cce5df")
+        .attr("stroke", "#69b3a2")
+        .attr("stroke-width", 1.5)
+        .attr("d",
+              d3.area<DataPoint>()
+                .x((d: DataPoint) => x(d.time*1000))
+                .y0(y(0))
+                .y1((d: DataPoint) => y(dGet(d)))
+            )
+    }
+    switch(props.value) {
+        case "Speed": addData('speed'); break;
+        case "Elevation": addData('elevation'); break;
+    }
+
+  }, [props.graphData, props.value])
+  if (props.value === "None") {
+    return <div></div>
+  }
+  return (
+    <div className="card" id="graphbox" style={{position: "absolute", right: "0px", top: "0px"}}>
+      <div id="chartdiv"></div>
+    </div>
+  )
+}
+
+function JGraphGroup(props: {value: string, setter: (s: string) => void}) {
+  return (
+          <JRadioGroup value={props.value} setter={props.setter}>
+            <JRadio value="None"/>
+            <JRadio value="Speed"/>
+            <JRadio value="Elevation"/>
+          </JRadioGroup>
+  )
+}
+
 function JHoverBox (props: {info: DataInfo, map?: mapboxgl.Map}) {
   const [hovered, setHovered] = useState(-1);
   useEffect(() => {
@@ -148,16 +243,6 @@ function JHighlightGroup(props: {info: DataInfo, map?: mapboxgl.Map}) {
             <JRadio value="Top Time"/>
             <JRadio value="Top Elevation"/>
             <JRadio value="Top Hilliness"/>
-          </JRadioGroup>
-  )
-}
-
-
-function JGraphGroup(props: {info: DataInfo}) {
-  const [graphType, setGraphType] = useState("None");
-  return (
-          <JRadioGroup value={graphType} setter={setGraphType}>
-            <JRadio value="None"/>
           </JRadioGroup>
   )
 }
@@ -260,7 +345,35 @@ async function getDataInfo() {
   console.log(jresponse);
   return jresponse;
 }
-async function addData(map: mapboxgl.Map, setInfo: (d: DataInfo)=>void) {
+async function addRestOfData(locations: number[][], setGraphData: (d: DataPoint[])=>void) {
+  async function getAData(loc: string) {
+    const dataUrl = process.env.PUBLIC_URL + '/bike_data/' + loc;
+    let response = await fetch(dataUrl);
+    let blob = await response.blob();
+    let arr = await blob.arrayBuffer();
+    console.log("Finished Graph Data: " + loc)
+    return arr;
+  }
+
+  const times = new Int32Array(await getAData('time'))
+  const speeds = new Float32Array(await getAData('speed'))
+  const elevations = new Float32Array(await getAData('ele'))
+
+  const dataPoints: DataPoint[] = locations.map((l, i) => {
+    return {
+      latitude: l[0],
+      longtitude: l[1],
+      time: times[i],
+      speed: speeds[i],
+      elevation: elevations[i],
+    }
+  })
+  console.log({locations, times, speeds, elevations})
+  console.log("Finished Setting Graph Data", dataPoints)
+  setGraphData(dataPoints)
+
+}
+async function addData(map: mapboxgl.Map, setInfo: (d: DataInfo)=>void, setGraphData: (d: DataPoint[])=>void) {
   const info: DataInfo = await getDataInfo();
   const dataUrl = process.env.PUBLIC_URL + '/bike_data/loc';
   let data = [];
@@ -272,11 +385,13 @@ async function addData(map: mapboxgl.Map, setInfo: (d: DataInfo)=>void) {
   let lf = null;
   let idx = 1;
   let c = 0;
+  let locations = [];
   for (let f of floats) {
     if (lf === null) {
       lf = f;
     } else {
       data.push([f, lf]);
+      locations.push([f, lf])
       c += 1;
       lf = null;
     }
@@ -288,6 +403,7 @@ async function addData(map: mapboxgl.Map, setInfo: (d: DataInfo)=>void) {
   }
   setInfo(info);
   console.log("Fetching complete");
+  await addRestOfData(locations, setGraphData)
 }
 
 function genMapId(idx: number, info: DataInfo): string {
