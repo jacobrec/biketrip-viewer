@@ -1,0 +1,25 @@
+{
+  "files": {
+    "main.css": "/biketrip-viewer/static/css/main.cb9e7039.chunk.css",
+    "main.js": "/biketrip-viewer/static/js/main.06319bca.chunk.js",
+    "main.js.map": "/biketrip-viewer/static/js/main.06319bca.chunk.js.map",
+    "runtime-main.js": "/biketrip-viewer/static/js/runtime-main.9d8c9916.js",
+    "runtime-main.js.map": "/biketrip-viewer/static/js/runtime-main.9d8c9916.js.map",
+    "static/css/2.9345dda6.chunk.css": "/biketrip-viewer/static/css/2.9345dda6.chunk.css",
+    "static/js/2.aceada5c.chunk.js": "/biketrip-viewer/static/js/2.aceada5c.chunk.js",
+    "static/js/2.aceada5c.chunk.js.map": "/biketrip-viewer/static/js/2.aceada5c.chunk.js.map",
+    "static/js/3.73da649c.chunk.js": "/biketrip-viewer/static/js/3.73da649c.chunk.js",
+    "static/js/3.73da649c.chunk.js.map": "/biketrip-viewer/static/js/3.73da649c.chunk.js.map",
+    "index.html": "/biketrip-viewer/index.html",
+    "static/css/2.9345dda6.chunk.css.map": "/biketrip-viewer/static/css/2.9345dda6.chunk.css.map",
+    "static/css/main.cb9e7039.chunk.css.map": "/biketrip-viewer/static/css/main.cb9e7039.chunk.css.map",
+    "static/js/2.aceada5c.chunk.js.LICENSE.txt": "/biketrip-viewer/static/js/2.aceada5c.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.9d8c9916.js",
+    "static/css/2.9345dda6.chunk.css",
+    "static/js/2.aceada5c.chunk.js",
+    "static/css/main.cb9e7039.chunk.css",
+    "static/js/main.06319bca.chunk.js"
+  ]
+}
