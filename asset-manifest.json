@@ -1,8 +1,8 @@
 {
   "files": {
     "main.css": "/biketrip-viewer/static/css/main.cb9e7039.chunk.css",
-    "main.js": "/biketrip-viewer/static/js/main.06319bca.chunk.js",
-    "main.js.map": "/biketrip-viewer/static/js/main.06319bca.chunk.js.map",
+    "main.js": "/biketrip-viewer/static/js/main.91bc042f.chunk.js",
+    "main.js.map": "/biketrip-viewer/static/js/main.91bc042f.chunk.js.map",
     "runtime-main.js": "/biketrip-viewer/static/js/runtime-main.9d8c9916.js",
     "runtime-main.js.map": "/biketrip-viewer/static/js/runtime-main.9d8c9916.js.map",
     "static/css/2.9345dda6.chunk.css": "/biketrip-viewer/static/css/2.9345dda6.chunk.css",
@@ -20,6 +20,6 @@
     "static/css/2.9345dda6.chunk.css",
     "static/js/2.aceada5c.chunk.js",
     "static/css/main.cb9e7039.chunk.css",
-    "static/js/main.06319bca.chunk.js"
+    "static/js/main.91bc042f.chunk.js"
   ]
 }
