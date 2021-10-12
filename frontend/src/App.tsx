@@ -31,11 +31,9 @@ function App() {
   const defaultInfo = {locations: [], provinces:[], days:[], distances:[], elevations:[], times:[], topspeeds:[], averagespeeds:[]};
   const mapContainer = useRef(null);
   const [map, setMap] = useState<mapboxgl.Map>();
-  const [lng, setLng] = useState(-95.0);
-  const [lat, setLat] = useState(60.0);
-  const [zoom, setZoom] = useState(3.0);
   const [info, setInfo] = useState<DataInfo>(defaultInfo);
   const [graphData, setGraphData] = useState<DataPoint[]>([]);
+  const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     if (typeof window === "undefined" || mapContainer.current === null) return;
     if (map) return; // initialize map only once
@@ -43,15 +41,15 @@ function App() {
     const mc = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/outdoors-v11',
-      center: [lng, lat],
-      zoom: zoom
+      center: [-95, 60],
+      zoom: 3.0
     });
 
     mc.on('load', () => {
-      addData(mc, setInfo, setGraphData);
+      addData(mc, setInfo, setGraphData, setLoaded);
     });
     setMap(mc);
-  }, [map, lng, lat, zoom]);
+  }, [map]);
 
   const [graphType, setGraphType] = useState("None");
   return (
@@ -60,7 +58,7 @@ function App() {
         <div ref={mapContainer} className="map-container" />
       </div>
 
-      <JHoverBox info={info} map={map} />
+      <JHoverBox info={info} map={map} loaded={loaded} />
       <JGraphBox value={graphType} graphData={graphData} />
       <div className="card" id="panel">
         <h1>Jacob&rsquo;s bike ride</h1>
@@ -164,7 +162,7 @@ function JGraphGroup(props: {value: string, setter: (s: string) => void}) {
   )
 }
 
-function JHoverBox (props: {info: DataInfo, map?: mapboxgl.Map}) {
+function JHoverBox (props: {info: DataInfo, map?: mapboxgl.Map, loaded: boolean}) {
   const [hovered, setHovered] = useState(-1);
   useEffect(() => {
     for (let i = 0; i < props.info.days.length; i++) {
@@ -175,8 +173,8 @@ function JHoverBox (props: {info: DataInfo, map?: mapboxgl.Map}) {
         }
       })
     }
-    console.log("Hover listeners setup")
-  }, [props.map])
+    console.log("Hover listeners setup: ", props.info.days.length, props.map)
+  }, [props.map, props.loaded, props.info])
   if (hovered === -1) {
     return <div></div>
   }
@@ -189,7 +187,7 @@ function JHoverBox (props: {info: DataInfo, map?: mapboxgl.Map}) {
       <h3> Day {hovered+1}: {genMapId(hovered+1, props.info)} </h3>
       <P> Distance: {(props.info.distances[hovered] / 1000).toFixed(3)}km </P>
       <P> Time: {(props.info.times[hovered] / 3600).toFixed(2)}h </P>
-      <P> Elevations: {(props.info.elevations[hovered]).toFixed(0)}m </P>
+      <P> Ascent: {(props.info.elevations[hovered]).toFixed(0)}m </P>
       <P> Max Speed: {(props.info.topspeeds[hovered] * 3.6).toFixed(1)}km/h </P>
       <P> Average Speed: {(props.info.averagespeeds[hovered] * 3.6).toFixed(1)}km/h </P>
     </div>
@@ -233,7 +231,7 @@ function JHighlightGroup(props: {info: DataInfo, map?: mapboxgl.Map}) {
       case 'Top Max Speed': filterDays(topDays('topspeeds')); break;
       default: filterDays([]); break;
     }
-  }, [highlight])
+  }, [highlight, props.info, props.map])
   return (
           <JRadioGroup value={highlight} setter={setHighlight}>
             <JRadio value="All"/>
@@ -309,7 +307,7 @@ function JColorbyGroup(props: {map?: mapboxgl.Map, info: DataInfo}) {
       case "Top Speed": setLayersToColor(colorBySpeedTop); break;
       case "Average Speed": setLayersToColor(colorBySpeedAve); break;
     }
-  }, [colorby])
+  }, [colorby, props.info, props.map])
 
   return (
           <JRadioGroup value={colorby} setter={setColorby}>
@@ -328,9 +326,9 @@ function JColorbyGroup(props: {map?: mapboxgl.Map, info: DataInfo}) {
 // https://gist.github.com/rosszurowski/67f04465c424a9bc0dae
 function lerpColor(a: string, b: string, amount: number) {
     var ah = +a.replace(/#/g, '0x'),
-        ar = ah >> 16, ag = ah >> 8 & 0xff, ab = ah & 0xff,
+        ar = ah >> 16, ag = (ah >> 8) & 0xff, ab = ah & 0xff,
         bh = +b.replace(/#/g, '0x'),
-        br = bh >> 16, bg = bh >> 8 & 0xff, bb = bh & 0xff,
+        br = bh >> 16, bg = (bh >> 8) & 0xff, bb = bh & 0xff,
         rr = ar + amount * (br - ar),
         rg = ag + amount * (bg - ag),
         rb = ab + amount * (bb - ab);
@@ -373,7 +371,7 @@ async function addRestOfData(locations: number[][], setGraphData: (d: DataPoint[
   setGraphData(dataPoints)
 
 }
-async function addData(map: mapboxgl.Map, setInfo: (d: DataInfo)=>void, setGraphData: (d: DataPoint[])=>void) {
+async function addData(map: mapboxgl.Map, setInfo: (d: DataInfo)=>void, setGraphData: (d: DataPoint[])=>void, setLoaded: (b:boolean) => void) {
   const info: DataInfo = await getDataInfo();
   const dataUrl = process.env.PUBLIC_URL + '/bike_data/loc';
   let data = [];
@@ -404,6 +402,7 @@ async function addData(map: mapboxgl.Map, setInfo: (d: DataInfo)=>void, setGraph
   setInfo(info);
   console.log("Fetching complete");
   await addRestOfData(locations, setGraphData)
+  setLoaded(true)
 }
 
 function genMapId(idx: number, info: DataInfo): string {

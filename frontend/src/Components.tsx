@@ -9,7 +9,7 @@ export function JHRule(props: {}) {
 }
 
 export function JRadioGroup(props: {value:string, setter: (a:string)=>void, children?: ReactNode}) {
-  const [group, setGroup] = useState(Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5));
+  const [group, ] = useState(Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5));
   const childrenWithProps = React.Children.map(props.children, child => {
     if (React.isValidElement(child)) {
       return React.cloneElement(child, {

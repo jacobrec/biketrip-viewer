@@ -140,6 +140,7 @@ def loadFile(filename):
     return act
 
 
+skipRes = 100
 class ActivityGroup():
     def __init__(self, activities):
         self.activities = activities
@@ -154,14 +155,15 @@ class ActivityGroup():
         self.averagespeeds = []
         for a in activities:
             try:
+                tt = a.track[::skipRes]
                 idx = dayIdx[-1]
-                self.track += a.track
+                self.track += tt
                 self.distances.append(a.totalDistance)
                 self.elevations.append(a.totalElevation)
                 self.topspeeds.append(a.topSpeed)
                 self.averagespeeds.append(a.averageSpeed)
                 self.times.append(a.totalTime)
-                dayIdx.append(len(a.track) + idx)
+                dayIdx.append(len(tt) + idx)
                 lastProvince = self.provinces[-1][0]
                 province = a.name.split(":")[1][1:].split("-")[0].strip()
                 where = "-".join(a.name.split("-")[1:]).strip().split(" to ")
