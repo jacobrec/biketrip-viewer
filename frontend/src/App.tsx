@@ -6,6 +6,9 @@ import './App.css';
 import {JRadio, JRadioGroup, JAccordian, JHRule} from './Components'
 import * as d3 from "d3";
 
+// eslint-disable-next-line import/no-webpack-loader-syntax
+(mapboxgl as any).workerClass = require('worker-loader!mapbox-gl/dist/mapbox-gl-csp-worker').default;
+
 mapboxgl.accessToken = 'pk.eyJ1Ijoic3VqYW5jaGFrcmFib3J0eSIsImEiOiJja2Q5MzBuc3owenplMnBzY2I0eDYwdDhvIn0.imItePLDlYNF2BGVde_mkw';
 
 type DataInfo = {
