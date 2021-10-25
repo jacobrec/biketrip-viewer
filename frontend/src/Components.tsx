@@ -2,7 +2,7 @@ import React, { useState, ReactNode } from 'react';
 import { ExpandLess, ExpandMore } from '@mui/icons-material';
 import styled from '@emotion/styled'
 
-export function JHidden(props: {show:boolean}) {
+export function JHidden(props: {show:boolean, children?: ReactNode}) {
     return <div style={{display: props.show ? "block" : "none"}}> {props.children} </div>
 }
 
@@ -15,6 +15,9 @@ export function JToggleInput(props: {enabled:boolean, setEnabled: (a:boolean)=>v
             <JToggle enabled={props.enabled} setEnabled={props.setEnabled} />
         </div>
     )
+}
+type JSpanProps = {
+    left: boolean
 }
 export function JToggle(props: {enabled:boolean, setEnabled: (a:boolean)=>void,}) {
     const JToggleInput = styled.input`
@@ -29,7 +32,7 @@ export function JToggle(props: {enabled:boolean, setEnabled: (a:boolean)=>void,}
         height: 18px;
 
     `
-    const JToggleSpan = styled.span`
+    const JToggleSpan = styled.span<JSpanProps>`
         position: absolute;
         cursor: pointer;
         top: 0;
