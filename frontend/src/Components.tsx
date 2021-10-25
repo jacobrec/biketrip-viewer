@@ -1,8 +1,74 @@
 import React, { useState, ReactNode } from 'react';
 import { ExpandLess, ExpandMore } from '@mui/icons-material';
+import styled from '@emotion/styled'
+
+export function JHidden(props: {show:boolean}) {
+    return <div style={{display: props.show ? "block" : "none"}}> {props.children} </div>
+}
+
+export function JToggleInput(props: {enabled:boolean, setEnabled: (a:boolean)=>void, label:string}) {
+    return (
+        <div style={{display: "flex",
+                     justifyContent: "space-between",
+                     alignItems: "center"}}>
+            <label> {props.label} </label>
+            <JToggle enabled={props.enabled} setEnabled={props.setEnabled} />
+        </div>
+    )
+}
+export function JToggle(props: {enabled:boolean, setEnabled: (a:boolean)=>void,}) {
+    const JToggleInput = styled.input`
+        opacity: 0;
+        width: 0;
+        height: 0;
+    `;
+    const JToggleLabel = styled.label`
+        position: relative;
+        display: inline-block;
+        width: 30px;
+        height: 18px;
+
+    `
+    const JToggleSpan = styled.span`
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: ${props => props.left ? "#cccccc" : "#2196F3"};
+        transition: .4s;
+        border-radius: 18px;
+
+        &:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 4px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+            transform: ${props => props.left ? "translateX(0px)" : "translateX(8px)"};
+        }
+    `;
+    JToggleSpan.defaultProps = {
+        left: false
+    }
+
+    return (
+            <JToggleLabel className="switch">
+                <JToggleInput type="checkbox" checked={props.enabled}
+                    onClick={() => props.setEnabled(!props.enabled)}/>
+                <JToggleSpan left={!props.enabled}/>
+            </JToggleLabel>
+           )
+}
+
 export function JHRule(props: {}) {
   return <hr style={{
-      border: "0",
+      border: "0px",
       height: "1px",
       backgroundImage: "linear-gradient(to right, #CCCCCC66, #CCCCCCFF, #CCCCCC66)",
   }}/>

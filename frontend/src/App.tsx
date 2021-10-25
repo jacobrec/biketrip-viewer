@@ -3,7 +3,7 @@ import styled from '@emotion/styled'
 import mapboxgl from 'mapbox-gl'; // eslint-disable-line import/no-webpack-loader-syntax
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './App.css';
-import {JRadio, JRadioGroup, JAccordian, JHRule} from './Components'
+import {JRadio, JRadioGroup, JAccordian, JHRule, JToggleInput, JHidden} from './Components'
 import * as d3 from "d3";
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
@@ -20,6 +20,9 @@ type DataInfo = {
   times: number[],
   topspeeds: number[],
   averagespeeds: number[],
+  totaldistance: number,
+  totaltime: number,
+  totalelevation: number,
 }
 
 type DataPoint = {
@@ -31,7 +34,7 @@ type DataPoint = {
 }
 
 function App() {
-  const defaultInfo = {locations: [], provinces:[], days:[], distances:[], elevations:[], times:[], topspeeds:[], averagespeeds:[]};
+  const defaultInfo = {locations: [], provinces:[], days:[], distances:[], elevations:[], times:[], topspeeds:[], averagespeeds:[], totaltime: 0, totalelevation: 0, totaldistance: 0};
   const mapContainer = useRef(null);
   const [map, setMap] = useState<mapboxgl.Map>();
   const [info, setInfo] = useState<DataInfo>(defaultInfo);
@@ -54,15 +57,19 @@ function App() {
     setMap(mc);
   }, [map]);
 
-  const [graphType, setGraphType] = useState("None");
+  const [graphType, setGraphType] = useState("Elevation");
+  const [totalsEnabled, setTotalsEnabled] = useState(false)
+  const [graphEnabled, setGraphEnabled] = useState(false)
+  const [hoverboxEnabled, setHoverboxEnabled] = useState(false)
   return (
     <div>
       <div id="background">
         <div ref={mapContainer} className="map-container" />
       </div>
 
-      <JHoverBox info={info} map={map} loaded={loaded} />
-      <JGraphBox value={graphType} graphData={graphData} />
+      <JHidden show={graphEnabled}> <JGraphBox value={graphType} graphData={graphData} /> </JHidden>
+      <JHidden show={hoverboxEnabled}> <JHoverBox info={info} map={map} loaded={loaded} /> </JHidden>
+      <JHidden show={totalsEnabled}> <JSummaryBox info={info} map={map} loaded={loaded} /> </JHidden>
       <div className="card" id="panel">
         <h1>Jacob&rsquo;s bike ride</h1>
         <div style={{marginLeft: "10px"}}>
@@ -70,16 +77,47 @@ function App() {
             <JColorbyGroup info={info} map={map} />
           </JAccordian>
           <JHRule />
-          <JAccordian title="Graph">
-            <JGraphGroup value={graphType} setter={setGraphType} />
-          </JAccordian>
-          <JHRule />
           <JAccordian title="Highlights">
             <JHighlightGroup info={info} map={map} />
+          </JAccordian>
+          <JHRule />
+          <JAccordian title="Options">
+            <JOptionGroup
+                totalsEnabled={totalsEnabled} setTotalsEnabled={setTotalsEnabled}
+                graphEnabled={graphEnabled} setGraphEnabled={setGraphEnabled}
+                hoverboxEnabled={hoverboxEnabled} setHoverboxEnabled={setHoverboxEnabled}
+            />
           </JAccordian>
         </div>
       </div>
     </div>
+  )
+}
+
+function JSummaryBox(props: {info: DataInfo}) {
+  const P = styled.p`
+    margin-bottom: 0px;
+    margin-top: 2px;
+  `
+  return (<div style={{position: "absolute", right: "0px", bottom: "0px"}} className="card">
+      <h3> Trip Summary </h3>
+      <P> Distance: {(props.info.totaldistance / 1000).toFixed(3)}km </P>
+      <P> Time: {(props.info.totaltime / 3600).toFixed(2)}h </P>
+      <P> Ascent: {(props.info.totalelevation).toFixed(0) / 1000}km </P>
+  </div>)
+}
+
+function JOptionGroup(props: {
+    totalsEnabled: boolean, setTotalsEnabled: (s: boolean) => void,
+    graphEnabled: boolean, setGraphEnabled: (s: boolean) => void,
+    hoverboxEnabled: boolean, setHoverboxEnabled: (s: boolean) => void,
+}) {
+  return (
+        <div>
+          <JToggleInput label="Elevation Graph" enabled={props.graphEnabled} setEnabled={props.setGraphEnabled} />
+          <JToggleInput label="Trip Summary" enabled={props.totalsEnabled} setEnabled={props.setTotalsEnabled} />
+          <JToggleInput label="Day Summary" enabled={props.hoverboxEnabled} setEnabled={props.setHoverboxEnabled} />
+        </div>
   )
 }
 
@@ -155,18 +193,9 @@ function JGraphBox(props: {graphData: DataPoint[], value: string}) {
   )
 }
 
-function JGraphGroup(props: {value: string, setter: (s: string) => void}) {
-  return (
-          <JRadioGroup value={props.value} setter={props.setter}>
-            <JRadio value="None"/>
-            <JRadio value="Speed"/>
-            <JRadio value="Elevation"/>
-          </JRadioGroup>
-  )
-}
 
 function JHoverBox (props: {info: DataInfo, map?: mapboxgl.Map, loaded: boolean}) {
-  const [hovered, setHovered] = useState(-1);
+  const [hovered, setHovered] = useState(0);
   useEffect(() => {
     for (let i = 0; i < props.info.days.length; i++) {
       let id = genMapId(i, props.info)
@@ -178,7 +207,7 @@ function JHoverBox (props: {info: DataInfo, map?: mapboxgl.Map, loaded: boolean}
     }
     console.log("Hover listeners setup: ", props.info.days.length, props.map)
   }, [props.map, props.loaded, props.info])
-  if (hovered === -1) {
+  if (hovered === -1 || props.info.distances.length <= hovered) {
     return <div></div>
   }
   const P = styled.p`

@@ -153,6 +153,11 @@ class ActivityGroup():
         self.times = []
         self.topspeeds = []
         self.averagespeeds = []
+        self.totals = {
+                "time": 0,
+                "distance": 0,
+                "elevation": 0,
+                }
         for a in activities:
             try:
                 tt = a.track[::skipRes]
@@ -160,9 +165,12 @@ class ActivityGroup():
                 self.track += tt
                 self.distances.append(a.totalDistance)
                 self.elevations.append(a.totalElevation)
+                self.times.append(a.totalTime)
+                self.totals["time"] += a.totalTime
+                self.totals["distance"] += a.totalDistance
+                self.totals["elevation"] += a.totalElevation
                 self.topspeeds.append(a.topSpeed)
                 self.averagespeeds.append(a.averageSpeed)
-                self.times.append(a.totalTime)
                 dayIdx.append(len(tt) + idx)
                 lastProvince = self.provinces[-1][0]
                 province = a.name.split(":")[1][1:].split("-")[0].strip()
@@ -200,6 +208,9 @@ class ActivityGroup():
         data["times"] = self.times
         data["topspeeds"] = self.topspeeds
         data["averagespeeds"] = self.averagespeeds
+        data["totaldistance"] = self.totals["distance"]
+        data["totaltime"] = self.totals["time"]
+        data["totalelevation"] = self.totals["elevation"]
         f = open(path + "info", 'w+')
         f.write(json.dumps(data, indent=4))
         f.close()
