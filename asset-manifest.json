@@ -1,27 +1,16 @@
 {
   "files": {
-    "main.css": "/biketrip-viewer/static/css/main.cb9e7039.chunk.css",
-    "main.js": "/biketrip-viewer/static/js/main.7cdc70ae.chunk.js",
-    "main.js.map": "/biketrip-viewer/static/js/main.7cdc70ae.chunk.js.map",
-    "runtime-main.js": "/biketrip-viewer/static/js/runtime-main.060f59c5.js",
-    "runtime-main.js.map": "/biketrip-viewer/static/js/runtime-main.060f59c5.js.map",
-    "static/css/2.9345dda6.chunk.css": "/biketrip-viewer/static/css/2.9345dda6.chunk.css",
-    "static/js/2.e1cf62f3.chunk.js": "/biketrip-viewer/static/js/2.e1cf62f3.chunk.js",
-    "static/js/2.e1cf62f3.chunk.js.map": "/biketrip-viewer/static/js/2.e1cf62f3.chunk.js.map",
-    "static/js/3.0f59341d.chunk.js": "/biketrip-viewer/static/js/3.0f59341d.chunk.js",
-    "static/js/3.0f59341d.chunk.js.map": "/biketrip-viewer/static/js/3.0f59341d.chunk.js.map",
+    "main.css": "/biketrip-viewer/static/css/main.63833f6b.css",
+    "main.js": "/biketrip-viewer/static/js/main.7fc13574.js",
+    "static/js/488.c9e09703.chunk.js": "/biketrip-viewer/static/js/488.c9e09703.chunk.js",
+    "static/js/mapbox-gl-csp-worker.f9ce5399.worker.js": "/biketrip-viewer/static/js/mapbox-gl-csp-worker.f9ce5399.worker.js",
     "index.html": "/biketrip-viewer/index.html",
-    "static/css/2.9345dda6.chunk.css.map": "/biketrip-viewer/static/css/2.9345dda6.chunk.css.map",
-    "static/css/main.cb9e7039.chunk.css.map": "/biketrip-viewer/static/css/main.cb9e7039.chunk.css.map",
-    "static/js/2.e1cf62f3.chunk.js.LICENSE.txt": "/biketrip-viewer/static/js/2.e1cf62f3.chunk.js.LICENSE.txt",
-    "static/js/mapbox-gl-csp-worker.b5868512.worker.js": "/biketrip-viewer/static/js/mapbox-gl-csp-worker.b5868512.worker.js",
-    "static/js/mapbox-gl-csp-worker.b5868512.worker.js.map": "/biketrip-viewer/static/js/mapbox-gl-csp-worker.b5868512.worker.js.map"
+    "main.63833f6b.css.map": "/biketrip-viewer/static/css/main.63833f6b.css.map",
+    "main.7fc13574.js.map": "/biketrip-viewer/static/js/main.7fc13574.js.map",
+    "488.c9e09703.chunk.js.map": "/biketrip-viewer/static/js/488.c9e09703.chunk.js.map"
   },
   "entrypoints": [
-    "static/js/runtime-main.060f59c5.js",
-    "static/css/2.9345dda6.chunk.css",
-    "static/js/2.e1cf62f3.chunk.js",
-    "static/css/main.cb9e7039.chunk.css",
-    "static/js/main.7cdc70ae.chunk.js"
+    "static/css/main.63833f6b.css",
+    "static/js/main.7fc13574.js"
   ]
 }
