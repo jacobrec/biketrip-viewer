@@ -1,5 +1,6 @@
 import React, { useState, ReactNode } from 'react';
-import { ExpandLess, ExpandMore } from '@mui/icons-material';
+import ExpandMore from '@mui/icons-material/ExpandMore';
+import ExpandLess from '@mui/icons-material/ExpandLess';
 import styled from '@emotion/styled'
 
 export function JHidden(props: {show:boolean, children?: ReactNode}) {
@@ -62,7 +63,7 @@ export function JToggle(props: {enabled:boolean, setEnabled: (a:boolean)=>void,}
 
     return (
             <JToggleLabel className="switch">
-                <JToggleInput type="checkbox" checked={props.enabled}
+                <JToggleInput type="checkbox" defaultChecked={props.enabled}
                     onClick={() => props.setEnabled(!props.enabled)}/>
                 <JToggleSpan left={!props.enabled}/>
             </JToggleLabel>
@@ -81,11 +82,12 @@ export function JRadioGroup(props: {value:string, setter: (a:string)=>void, chil
   const [group, ] = useState(Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5));
   const childrenWithProps = React.Children.map(props.children, child => {
     if (React.isValidElement(child)) {
-      return React.cloneElement(child, {
+      const cprops = {
         group,
         checked: child.props.value === props.value,
         setter: props.setter
-      });
+      }
+      return React.cloneElement(child, cprops);
     }
     return child;
   });
